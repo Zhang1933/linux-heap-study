@@ -2929,11 +2929,11 @@ tcache_put (mchunkptr chunk, size_t tc_idx)
 }
 
 /* Caller must ensure that we know tc_idx is valid and there's
-   available chunks to remove.  */
+   available chunks to remove.  */ // caller必须保证tc_idx合法，并且对应的tcache bin中有对应的chunk。
 static __always_inline void *
 tcache_get (size_t tc_idx)
 {
-  tcache_entry *e = tcache->entries[tc_idx];
+  tcache_entry *e = tcache->entries[tc_idx]; // 从tcache bin 链表头部取一个chunk。
   tcache->entries[tc_idx] = e->next;
   --(tcache->counts[tc_idx]);
   e->key = NULL;
@@ -3511,7 +3511,7 @@ __libc_calloc (size_t n, size_t elem_size)
 static void *
 _int_malloc (mstate av, size_t bytes) 
 {
-  INTERNAL_SIZE_T nb;               /* normalized request size 填充对齐后的chunk大小 */
+  INTERNAL_SIZE_T nb;               /* normalized request size 正规化后的大小,也就是填充对齐后的chunk大小 */
   unsigned int idx;                 /* associated bin index */
   mbinptr bin;                      /* associated bin */
 
@@ -3722,7 +3722,7 @@ _int_malloc (mstate av, size_t bytes)
   tcache_unsorted_count = 0;
 #endif
 
-  for (;; ) // 执行到这，samllbin要么没有，要么申请的大小大于samllbin。 在unsorted bin中找一下。
+  for (;; ) // 执行到这，fastbins中没有符合要求的。samllbin要么没有，要么申请的大小大于samllbin。 在unsorted bin中找一下。
     {
       int iters = 0;
       while ((victim = unsorted_chunks (av)->bk) != unsorted_chunks (av)) // 如果unsorted bins链表不为空。
@@ -3913,7 +3913,7 @@ _int_malloc (mstate av, size_t bytes)
          If a large request, scan through the chunks of current bin in
          sorted order to find smallest that fits.  Use the skip list for this.
        */
-      // 执行到这里，unsorted bin找符合的失败。如果是一个大的请求。如果不在samllbin的范围里面，将就一下,切割一下large bin。否则下标+1,按顺序扫描bins找到最佳的适配。
+      // 执行到这里，unsorted bin找符合的失败。如果不在samllbin的范围里面，将就一下,切割一下large bin。否则下标+1,按顺序扫描bins找到最佳的适配。
       if (!in_smallbin_range (nb))
         {
           bin = bin_at (av, idx);
