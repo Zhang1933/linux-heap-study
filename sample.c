@@ -1,9 +1,9 @@
 /*
- *
- * 为64位下的情况。
+ * 演示程序为64位下的情况。
  */
 #include<string.h>
 #include<stdlib.h>
+#include <unistd.h>
 
 # define TCACHE_FILL_COUNT 7 // tcache bin 最大chunk数，为可调参数 
 
@@ -23,8 +23,14 @@ static INTERNAL_SIZE_T global_max_fast=128;
 #define DEFAULT_MMAP_THRESHOLD_MIN (128 * 1024)
 #endif
 
+// 最小chunk大小，定义在malloc.c:1183
+#define MINSIZE 32
+
+// malloc分配块的对齐,定义在malloc.c:27 
+#define MALLOC_ALIGNMENT 16
 
 int main(){
+    size_t pagesize =getpagesize();
     char *pad="012345678";
     char *s[TCACHE_FILL_COUNT];
     // 申请TCACHE_FILL_COUNT 个chunk。
@@ -49,14 +55,29 @@ int main(){
     // 让我们分配一个数据字段占tcache_max_bytes的chunk。此时会调用malloc_consolidate函数, 将fastbin中的chunk(即to_fasta,to_fastb这两个chunk)归并到top chunk中。
     char *largebin=malloc(tcache_max_bytes+1);
 
-    // 将largebin合并到top chunk。此时合并后的chunk size>=FASTBIN_CONSOLIDATION_THRESHOLD。会执行systrim函数减少空闲top chunk。因为malloc初始化时会向系统要33页的空间，第一次到这里时，大小肯定是会超过32页的。但没有超过一页的大小。
+    // 将largebin合并到top chunk。此时合并后的chunk size>=FASTBIN_CONSOLIDATION_THRESHOLD。会执行systrim函数减少空闲top chunk。因为malloc初始化时会向系统要33页的空间，第一次到这里时，大小肯定是会超过32页的,但没有超过33页。
     free(largebin);
 
     // 用mmap分配、释放。
-    char *mmap=malloc(DEFAULT_MMAP_THRESHOLD_MIN-8);
+    char *mmap=malloc(DEFAULT_MMAP_THRESHOLD_MIN+pagesize);
     free(mmap);
-
-    // 测试unsorted bin。此时，tcache bin[0]中是满的。
     
+/* ---------------------unosrted bin playground------------------------------*/
+ 
+    // 此时fastbin中没有，tcache bin[0]是满的。创建两个放入largebin中的chunk。large chunk a大小为1056
+    char *largechunka=malloc(tcache_max_bytes+1);
+    // 将largechunka,largechunkb隔开,使其不能合并。
+    char *edgeab=malloc(MINSIZE+1);
+    // b的chunk大小大于a,large chunk b 大小为1072.
+    char *largechunkb=malloc(1056);
+    //分配一个48chunk大小的边界。使chunk上面的与top chunk 隔开。
+    char *edgetop=malloc(MINSIZE+1);
 
+    // free完后，largechunka,largechunkb在unsorted bin中。
+    free(largechunka);
+    free(largechunkb);// unsoretd bin 是尾插.
+    
+    // 现在我们来申请一个largechunkc，此时会遍历unsorted bin,将largechunka,largechunkb从小到大放到large bin中。
+    char *largechunkc=malloc(tcache_max_bytes*2);
+    
 }
