@@ -5,8 +5,7 @@
 
 通过手动构造的样例动态调试malloc，free函数进行源码分析来理解堆、堆管理。
 
-* 仓库中所给的glibc版本：2.31。没有增删行,行可以和[glibc-2.31源代码](https://elixir.free-electrons.com/glibc/glibc-2.31/source/malloc/malloc.c)对应上。有中文注释。
-
+* 仓库中所给的glibc版本：2.31。没有增删行,行可以和[glibc-2.31源代码](https://elixir.free-electrons.com/glibc/glibc-2.31/source/malloc/malloc.c)对应上。仓库中的[malloc.c源码](https://github.com/Zhang1933/linux-heap-study/blob/main/glibc-2.31/malloc/malloc.c)有许多注释&分析。
 
 ## 如何使用:
 
@@ -18,7 +17,7 @@
 make
 ```
 
-目录下会生成对应的动态链接，带调试符号的目标文件。通过用gdb调试这个样例程序进入库源码动态调试理解堆管理。
+目录下会生成对应的动态链接，带调试符号的目标文件。通过用gdb动态调试这个样例程序理解堆管理。
 
 ## 分析源代码&调试相关问题：
 
@@ -32,13 +31,13 @@ make
 
 ### malloc分配流程框架：
 
-Glibc 2.26以上版本，tcache 默认情况下开启:[Glibc Enables A Per-Thread Cache For Malloc - Big Performance Win](https://www.phoronix.com/scan.php?page=news_item&px=glibc-malloc-thread-cache)。这里分析时用默认情况。
+Glibc 2.26以上版本，tcache 默认情况下开启:[Glibc Enables A Per-Thread Cache For Malloc - Big Performance Win](https://www.phoronix.com/scan.php?page=news_item&px=glibc-malloc-thread-cache)。这里说明默认情况。
 
 malloc 入口点：`__libc_malloc`函数。
 
-标注了与malloc.c源码中对应的判断行,复合判断有可能在下一个if。
+标注了与[malloc.c](https://elixir.free-electrons.com/glibc/glibc-2.31/source/malloc/malloc.c)源码中对应的判断行,复合判断有可能在下一个if。
 
-chunk分配步骤总述(不包括初始化)。
+chunk分配步骤框架(不包括初始化)。
 
 ```cpp
 if(请求的chunk大小不超过tcache bins中chunk的最大大小&&大小对应的bin中有空chunk){// 3047
@@ -82,7 +81,7 @@ for(;;){ // 3725
                  标记return_cached=1;
                  continue;
              }
-             else{
+             else{ // 3807
                  return unsorted bin 中的第一个chunk;
              }
         }
@@ -208,11 +207,12 @@ return;
 ```
 
 
-## 一些不错的资料：
+## 一些可能有用的资料：
 
-可以先看下面这两篇博客，对堆内存管理有个大体上的了解,再开始源码分析。
+除了上述所引用的链接外：
 
 * [PART 1: UNDERSTANDING THE GLIBC HEAP IMPLEMENTATION](https://azeria-labs.com/heap-exploitation-part-2-glibc-heap-free-bins/)
 * [PART 2: UNDERSTANDING THE GLIBC HEAP IMPLEMENTATION](https://azeria-labs.com/heap-exploitation-part-2-glibc-heap-free-bins/)
-
-TODO: 如何合并前面
+* [Overview of Malloc](https://sourceware.org/glibc/wiki/MallocInternals#Thread_Local_Cache_.28tcache.29)
+* [Bins and Chunks](https://heap-exploitation.dhavalkapil.com/diving_into_glibc_heap/bins_chunks)
+* [Glibc的堆实现](https://dere.press/2020/06/21/glibc-heap/#unlink_chunk)
