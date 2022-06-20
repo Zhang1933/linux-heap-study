@@ -39,7 +39,7 @@ int main(){
         strcpy(s[i],pad);
     }
     
-    //再申请一个chunk
+    //再申请2个chunk
     char *to_fasta=malloc(0); 
     char *to_fastb=malloc(0); 
     strcpy(to_fasta,pad);
@@ -52,7 +52,7 @@ int main(){
     // 在fastbin链表头加入to_fastb。
     free(to_fastb);
     
-    // 让我们分配一个数据字段占tcache_max_bytes的chunk。此时会调用malloc_consolidate函数, 将fastbin中的chunk(即to_fasta,to_fastb这两个chunk)归并到top chunk中。
+    // 让我们分配一个数据字段占tcache_max_bytes的chunk。此时会调用malloc_consolidate函数, 将fastbin中的chunk(即to_fasta,to_fastb这两个chunk)合并到top chunk中。
     char *largebin=malloc(tcache_max_bytes+1);
 
     // 将largebin合并到top chunk。此时合并后的chunk size>=FASTBIN_CONSOLIDATION_THRESHOLD。会执行systrim函数减少空闲top chunk。因为malloc初始化时会向系统要33页的空间，第一次到这里时，大小肯定是会超过32页的,但没有超过33页。
@@ -75,7 +75,7 @@ int main(){
 
     // free完后，largechunka,largechunkb在unsorted bin中。
     free(largechunka);
-    free(largechunkb);// unsoretd bin 是尾插.
+    free(largechunkb);
     
     // 现在我们来申请一个largechunkc，此时会遍历unsorted bin,将largechunka,largechunkb从小到大放到large bin中。
     char *largechunkc=malloc(tcache_max_bytes*2);
