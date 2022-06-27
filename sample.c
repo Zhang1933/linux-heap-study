@@ -79,5 +79,6 @@ int main(){
     
     // 现在我们来申请一个largechunkc，此时会遍历unsorted bin,将largechunka,largechunkb从小到大放到large bin中。
     char *largechunkc=malloc(tcache_max_bytes*2);
-    
+    // 调试calloc情况，,置0操作   break sample.c:83
+    char *largechunkd=calloc(1,8);
 }

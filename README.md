@@ -17,7 +17,7 @@
 make
 ```
 
-目录下会生成对应的动态链接，带调试符号的目标文件。通过用gdb动态调试这个样例程序理解堆管理。
+目录下会生成对应的动态链接的，带调试符号的目标文件。通过用gdb动态调试这个样例程序理解堆管理。也可以调试[shellphish/how2heap](https://github.com/shellphish/how2heap)上的样例。
 
 ## 分析源代码&调试相关问题：
 
@@ -135,7 +135,7 @@ for(;;){ // 3725
         }
     }
 use_top: // 4087
-    if(切下所请求chunk大小的topchunk后,topchunk的大小不少于最小chunk大小){ // 4109
+    if(切下所请求chunk大小的topchunk后,topchunk的大小不小于最小chunk大小){ // 4109
         从topchunk中切下需要申请的chunk;
         return 切下的chunk;
     }
@@ -206,6 +206,23 @@ else{ // 4425
 return;
 ```
 
+### calloc流程
+
+入口点：`__libc_calloc`
+
+```cpp
+算出用户需要的空间; // 3376
+调用_int_malloc函数分配空间(跟malloc.c:3577行后的逻辑一样。不会优先用tcachebin); // 3428
+//3464
+if(chunk是通过mmap方式分配的){ // 3453
+    return; // 不需要置0,直接返回
+}
+if(如果top chunk扩展了){ // 3464 
+    设定需要置0的内存空间为原来top chunk的大小;
+}
+将需要置0的内存空间置0;
+return _init_malloc返回chunk的数据部分;
+```
 
 ## 一些可能有用的资料：
 

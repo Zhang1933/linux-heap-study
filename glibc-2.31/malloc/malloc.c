@@ -3373,7 +3373,7 @@ __libc_calloc (size_t n, size_t elem_size)
     INTERNAL_SIZE_T *d;
     ptrdiff_t bytes;
 
-    if (__glibc_unlikely (__builtin_mul_overflow (n, elem_size, &bytes)))
+    if (__glibc_unlikely (__builtin_mul_overflow (n, elem_size, &bytes))) // 防溢出乘
     {
         __set_errno (ENOMEM);
         return NULL;
@@ -3401,7 +3401,7 @@ __libc_calloc (size_t n, size_t elem_size)
     if (av)
     {
         /* Check if we hand out the top chunk, in which case there may be no
-           need to clear. */
+           need to clear. */  // 如果是从top chunk上割下的，就不用置0
 #if MORECORE_CLEARS
         oldtop = top (av);
         oldtopsize = chunksize (top (av));
@@ -3425,7 +3425,7 @@ __libc_calloc (size_t n, size_t elem_size)
         oldtop = 0;
         oldtopsize = 0;
     }
-    mem = _int_malloc (av, sz);
+    mem = _int_malloc (av, sz); // 同样流程申请空间
 
     assert (!mem || chunk_is_mmapped (mem2chunk (mem)) ||
             av == arena_for_chunk (mem2chunk (mem)));
@@ -3463,7 +3463,7 @@ __libc_calloc (size_t n, size_t elem_size)
 #if MORECORE_CLEARS
     if (perturb_byte == 0 && (p == oldtop && csz > oldtopsize))
     {
-        /* clear only the bytes from non-freshly-sbrked memory */
+        /* clear only the bytes from non-freshly-sbrked memory */ // 说明top chunk扩展了,只需要置0以往的部分
         csz = oldtopsize;
     }
 #endif
@@ -3472,9 +3472,9 @@ __libc_calloc (size_t n, size_t elem_size)
        contents have an odd number of INTERNAL_SIZE_T-sized words;
        minimally 3.  */
     d = (INTERNAL_SIZE_T *) mem;
-    clearsize = csz - SIZE_SZ;
-    nclears = clearsize / sizeof (INTERNAL_SIZE_T);
-    assert (nclears >= 3);
+    clearsize = csz - SIZE_SZ; // chunk数据部分清空,算出数据部分的值
+    nclears = clearsize / sizeof (INTERNAL_SIZE_T); // 计算需要置零多少个字
+    assert (nclears >= 3); // 至少置零3个字
 
     if (nclears > 9)
         return memset (d, 0, clearsize);
