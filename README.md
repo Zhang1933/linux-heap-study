@@ -3,7 +3,7 @@
 > The best source of knowledge with regards to the implementation of the heap is itself, the source code.
 
 
-通过手动构造的样例动态调试malloc，free函数进行源码分析来理解堆、堆管理。
+通过手动构造的样例动态调试malloc，free,calloc函数进行源码分析来理解堆、堆管理。
 
 * 仓库中所给的glibc版本：2.31。没有增删行,行可以和[glibc-2.31源代码](https://elixir.free-electrons.com/glibc/glibc-2.31/source/malloc/malloc.c)对应上。仓库中的[malloc.c源码](https://github.com/Zhang1933/linux-heap-study/blob/main/glibc-2.31/malloc/malloc.c)有许多注释&分析。
 
