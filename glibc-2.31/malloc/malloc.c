@@ -1400,7 +1400,7 @@ typedef struct malloc_chunk *mbinptr;
 
 #define NBINS             128
 #define NSMALLBINS         64
-#define SMALLBIN_WIDTH    MALLOC_ALIGNMENT // FIXME: SMALLBIN跨度=malloc的对齐一要求。SMALLBIN跨度就是相邻smallbin之间的大小的差距。(64位差距是16，32位是8) 发现网上很多是按照32位来说的。
+#define SMALLBIN_WIDTH    MALLOC_ALIGNMENT //  SMALLBIN跨度=malloc的对齐一要求。SMALLBIN跨度就是相邻smallbin之间的大小的差距。(64位差距是16，32位是8) 发现网上很多是按照32位来说的。
 #define SMALLBIN_CORRECTION (MALLOC_ALIGNMENT > 2 * SIZE_SZ) // 校正,猜测校正应该跟防止数组越界有关。
 #define MIN_LARGE_SIZE    ((NSMALLBINS - SMALLBIN_CORRECTION) * SMALLBIN_WIDTH) //  samllbins中chunk最大大小=(smallbins个数-校正)*samllbin跨度。samllbins中chunk最大大小 64位为1024字节,32位为512字节。
 
@@ -3637,7 +3637,7 @@ _int_malloc (mstate av, size_t bytes)
         idx = smallbin_index (nb); //给定申请大小，计算在samlbin中的下标
         bin = bin_at (av, idx); // 取给定下标取bin头
 
-        if ((victim = last (bin)) != bin) // victim 为bin链表中第一个chunk。如果对应的samllbin中有chunk，则返回chunk并尝试用smallbin中的chunk填充对应tcache bin。
+        if ((victim = last (bin)) != bin) // 如果对应的bin不为空。victim 为bin链表中第一个chunk。如果对应的samllbin中有chunk，则返回chunk并尝试用smallbin中的chunk填充对应tcache bin。
         {
             bck = victim->bk;
             if (__glibc_unlikely (bck->fd != victim))  // 安全性检测，要求本chunk与下一个chunk之间的连接是双向的
@@ -4261,7 +4261,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
         if (SINGLE_THREAD_P)
         {
             /* Check that the top of the bin is not the record we are going to
-               add (i.e., double free).  */
+               add (i.e., double free).  */ // 只检查了fastbin top的情况
             if (__builtin_expect (old == p, 0))
                 malloc_printerr ("double free or corruption (fasttop)");
             p->fd = old;
