@@ -3838,19 +3838,19 @@ _int_malloc (mstate av, size_t bytes)
                     /* if smaller than smallest, bypass loop below */
                     assert (chunk_main_arena (bck->bk));
                     if ((unsigned long) (size)
-                            < (unsigned long) chunksize_nomask (bck->bk)) // 如果这个块足够小，那么只需将其以头插法插入到链表首即可
+                            < (unsigned long) chunksize_nomask (bck->bk)) // 如果这个块足够小，那么只需将其以头插法插入到链表尾即可
                     {
                         fwd = bck;
                         bck = bck->bk; 
 
-                        victim->fd_nextsize = fwd->fd;
-                        victim->bk_nextsize = fwd->fd->bk_nextsize;
+                        victim->fd_nextsize = fwd->fd; // nextsize循环双向链表, fd_nextsize，bk_nextsize域分别构成一个方向相反的循环链表。
+                        victim->bk_nextsize = fwd->fd->bk_nextsize; 
                         fwd->fd->bk_nextsize = victim->bk_nextsize->fd_nextsize = victim;
                     }
                     else
                     {
                         assert (chunk_main_arena (fwd));
-                        while ((unsigned long) size < chunksize_nomask (fwd))
+                        while ((unsigned long) size < chunksize_nomask (fwd)) // 插入排序,维持从大到小的顺序
                         {
                             fwd = fwd->fd_nextsize;
                             assert (chunk_main_arena (fwd));
