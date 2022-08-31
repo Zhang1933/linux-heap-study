@@ -1,4 +1,4 @@
-base:= sample 
+base:= sample realloc
 
 CFLAGS += -gdwarf-2 -g3 
 

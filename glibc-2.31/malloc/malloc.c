@@ -3137,10 +3137,10 @@ __libc_realloc (void *oldmem, size_t bytes)
     void *(*hook) (void *, size_t, const void *) =
         atomic_forced_read (__realloc_hook);
     if (__builtin_expect (hook != NULL, 0))
-        return (*hook)(oldmem, bytes, RETURN_ADDRESS (0));
+        return (*hook)(oldmem, bytes, RETURN_ADDRESS (0)); // hook 初始化为 realloc_hook_ini
 
 #if REALLOC_ZERO_BYTES_FREES
-    if (bytes == 0 && oldmem != NULL)
+    if (bytes == 0 && oldmem != NULL) // 如果新分配的大小是0，那么直接释放
     {
         __libc_free (oldmem); return 0;
     }
@@ -3174,7 +3174,7 @@ __libc_realloc (void *oldmem, size_t bytes)
             && !DUMPED_MAIN_ARENA_CHUNK (oldp))
         malloc_printerr ("realloc(): invalid pointer");
 
-    if (!checked_request2size (bytes, &nb))
+    if (!checked_request2size (bytes, &nb)) // 计算新申请的 chunk 需要的大小
     {
         __set_errno (ENOMEM);
         return NULL;
@@ -4548,7 +4548,7 @@ _int_realloc(mstate av, mchunkptr oldp, INTERNAL_SIZE_T oldsize,
     unsigned long    remainder_size;  /* its size */
 
     /* oldmem size */
-    if (__builtin_expect (chunksize_nomask (oldp) <= 2 * SIZE_SZ, 0)
+    if (__builtin_expect (chunksize_nomask (oldp) <= 2 * SIZE_SZ, 0) // 
             || __builtin_expect (oldsize >= av->system_mem, 0))
         malloc_printerr ("realloc(): invalid old size");
 
@@ -4624,7 +4624,7 @@ _int_realloc(mstate av, mchunkptr oldp, INTERNAL_SIZE_T oldsize,
 
     /* If possible, free extra space in old or extended chunk */
 
-    assert ((unsigned long) (newsize) >= (unsigned long) (nb));
+    assert ((unsigned long) (newsize) >= (unsigned long) (nb));// newsize 是一共拿到的大小，nb是所需要的大小
 
     remainder_size = newsize - nb;
 

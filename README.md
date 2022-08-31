@@ -3,7 +3,7 @@
 > The best source of knowledge with regards to the implementation of the heap is itself, the source code.
 
 
-通过手动构造的样例动态调试malloc，free,calloc函数进行源码分析来理解堆、堆管理。
+通过手动构造的样例动态调试malloc，free,calloc,realloc函数进行源码分析来理解堆、堆管理。
 
 * 仓库中所给的glibc版本：2.31。没有增删行,行可以和[glibc-2.31源代码](https://elixir.free-electrons.com/glibc/glibc-2.31/source/malloc/malloc.c)对应上。仓库中的[malloc.c源码](https://github.com/Zhang1933/linux-heap-study/blob/main/glibc-2.31/malloc/malloc.c)有许多注释&分析。
 
@@ -222,6 +222,69 @@ if(如果top chunk扩展了){ // 3464
 }
 将需要置0的内存空间置0;
 return _init_malloc返回chunk的数据部分;
+```
+
+### realloc 流程
+
+当传入的指针是空时,入口点: `__libc_malloc`。 分配流程和 malloc(size) 一样。
+
+否则入口点 `__libc_realloc`。编译出的程序直接 call 的地址不一样。
+
+为了方便叙述，假设是这么调用的: `realloc(void *oldmem, size_t bytes)`。
+
+oldmem指向旧chunk的数据部分，bytes是你想要新chunk中数据部分的大小。
+
+```cpp
+if(如果bytes为0){ //  3143
+    调用 __libc_free 函数,直接释放 oldmem 所在的chunk;
+}
+if(oldmem为0){// 3150
+    调用  __libc_malloc 函数,按照 malloc 的逻辑分配一个新chunk;
+}
+if(chunk 是mmap 分配的){ // 3183
+    TODO: 流程分析
+}
+if(是单线程){ // 3224
+    返回调用的_int_realloc函数的执行结果。
+}
+....
+```
+
+#### _int_realloc 函数流程分析
+
+```cpp
+if(旧的chunk大小大于等于所需的新的chunk大小){ // 4566
+     新chunk=旧chunk; // 后面会切分多余,新chunk也是下面4631行处说的总共拿到的chunk。
+}
+else{ // 4573
+    if(内存中下一个chunk是top chunk且top chunk分配之后大于最小chunk大小){ // 4576
+        top chunk中切下所需扩展的大小给旧chunk，返回旧chunk;
+    } 
+    else if(如果内存中旧chunk下一个chunk不是top chunk且下一个chunk使用位为0且旧chunk大小+下一个chunk大小>=需要的大小){ // 4588
+        newp=oldp; // oldp指向旧chunk,newp指向新chunk
+        链表中释放内存中下一个chunk;
+    }
+    else{ // 4598
+        调用_int_malloc函数分配所需大小的chunk;//newmem=_int_malloc(av,nb-MALLOC_ALIGN_MASK); ,nb 是所需chunk的大小,av是对应的arena
+        if(新分配的chunk是旧chunk内存中下一个chunk){ // 4610 ,chunk在 fastbin，tacachebin中的情况
+            把相邻的两个chunk合并在一起,不需要复制旧chunk中的内容;
+        }
+        else{ // 4615
+            将旧chunk的内容复制到新chunk中; 
+            释放旧chunk;
+            return 所分配的新chunk;
+        }
+    }
+}
+
+if(总共拿到的chunk大小减去所需要的chunk大小小于最小chunk大小){ // 4631 ,有多余的情况。
+    就按总共拿到的chunk大小算;
+}
+else{ // 4636 
+    从总共拿到的chunk大小切出多余的部分;
+    将切出的chunk释放掉; // 即调用_int_free(av,remainder,1); av指向arena,remainder指向切出的多余chunk,1表示have_lock为1。
+}
+return 新chunk所对应的数据区地址;
 ```
 
 ## 一些可能有用的资料：
