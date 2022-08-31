@@ -272,13 +272,13 @@ else{ // 4573
         else{ // 4615
             将旧chunk的内容复制到新chunk中; 
             释放旧chunk;
-            return 所分配的新chunk;
+            return 所分配的新chunk的数据区;
         }
     }
 }
 
 if(总共拿到的chunk大小减去所需要的chunk大小小于最小chunk大小){ // 4631 ,有多余的情况。
-    就按总共拿到的chunk大小算;
+    不切分，设置一些新chunk头部元数据;
 }
 else{ // 4636 
     从总共拿到的chunk大小切出多余的部分;
