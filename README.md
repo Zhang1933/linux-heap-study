@@ -43,6 +43,7 @@ chunk分配步骤框架(不包括初始化)。
 if(请求的chunk大小不超过tcache bins中chunk的最大大小&&大小对应的bin中有空chunk){// 3047
     return 对应的tcache bin链表中取出的chunk;
 }
+调用_int_malloc函数,下面是 _int_malloc 函数中的逻辑
 if(请求的大小不超过fastbins中chunk的最大大小&&对应的fastbins中的有空chunk){ // 3577
     从大小对应的fastbin中取一个chunk;
     if(请求的chunk大小对应的tcache bin没有装满){ // 3600
@@ -264,11 +265,11 @@ else{ // 4573
     } 
     else if(如果内存中旧chunk下一个chunk不是top chunk且下一个chunk使用位为0且旧chunk大小+下一个chunk大小>=需要的大小){ // 4588
         newp=oldp; // oldp指向旧chunk,newp指向新chunk
-        链表中释放内存中下一个chunk;
+        链表中取出内存中的下一个chunk;
     }
     else{ // 4598
         调用_int_malloc函数分配所需大小的chunk;//newmem=_int_malloc(av,nb-MALLOC_ALIGN_MASK); ,nb 是所需chunk的大小,av是对应的arena
-        if(新分配的chunk是旧chunk内存中下一个chunk){ // 4610 ,chunk在 fastbin，tacachebin中的情况
+        if(新分配的chunk是旧chunk内存中下一个chunk){ // 4610 ,chunk在fastbin中的情况
             把相邻的两个chunk合并在一起,不需要复制旧chunk中的内容;
         }
         else{ // 4615
